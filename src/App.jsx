@@ -2,72 +2,81 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat } from "./hooks/useChat";
 import { useKnowledgeBase } from "./hooks/useKnowledgeBase";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-// ── Icons (inline SVG — no extra dependency) ──────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
 const Icon = {
   Brain: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
       <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.44-3.14Z"/>
       <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.44-3.14Z"/>
     </svg>
   ),
   Upload: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
     </svg>
   ),
   Link: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
     </svg>
   ),
   File: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
     </svg>
   ),
   Globe: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
-      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
     </svg>
   ),
   Trash: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
-      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/>
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
     </svg>
   ),
   Send: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "100%", height: "100%" }}>
+      <line x1="22" y1="2" x2="11" y2="13"/>
+      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
     </svg>
   ),
   Stop: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+    <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "100%", height: "100%" }}>
       <rect x="6" y="6" width="12" height="12" rx="2"/>
     </svg>
   ),
   ChevronDown: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "100%", height: "100%" }}>
       <polyline points="6 9 12 15 18 9"/>
     </svg>
   ),
   ChevronRight: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "100%", height: "100%" }}>
       <polyline points="9 18 15 12 9 6"/>
     </svg>
   ),
   Menu: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  ),
-  X: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "100%", height: "100%" }}>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
     </svg>
   ),
   Sparkles: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-full h-full">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "100%", height: "100%" }}>
       <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
     </svg>
   ),
@@ -95,8 +104,121 @@ const STARTER_PROMPTS = [
   "Extract any action items or recommendations mentioned.",
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Markdown renderer components ──────────────────────────────────────────────
+// Defined before ChatMessage since ChatMessage uses it
+const markdownComponents = {
+  h1: ({ children }) => (
+    <h1 style={{ fontSize: 17, fontWeight: 700, color: "#f4f4f5", margin: "18px 0 8px", lineHeight: 1.3 }}>
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 style={{ fontSize: 15, fontWeight: 600, color: "#e4e4e7", margin: "16px 0 6px", lineHeight: 1.3, borderBottom: "1px solid #27272a", paddingBottom: 6 }}>
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 style={{ fontSize: 14, fontWeight: 600, color: "#d4d4d8", margin: "14px 0 5px" }}>
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.8, margin: "0 0 10px" }}>
+      {children}
+    </p>
+  ),
+  strong: ({ children }) => (
+    <strong style={{ fontWeight: 600, color: "#e4e4e7" }}>{children}</strong>
+  ),
+  em: ({ children }) => (
+    <em style={{ color: "#c4c4c8", fontStyle: "italic" }}>{children}</em>
+  ),
+  ul: ({ children }) => (
+    <ul style={{ margin: "6px 0 10px", paddingLeft: 20, display: "flex", flexDirection: "column", gap: 4 }}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol style={{ margin: "6px 0 10px", paddingLeft: 20, display: "flex", flexDirection: "column", gap: 4 }}>
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.7, paddingLeft: 4 }}>
+      {children}
+    </li>
+  ),
+  code: ({ inline, children }) => inline
+    ? (
+      <code style={{
+        fontSize: 12, fontFamily: "monospace",
+        background: "rgba(124,58,237,.15)",
+        border: "1px solid rgba(124,58,237,.25)",
+        borderRadius: 4, padding: "1px 6px", color: "#c4b5fd",
+      }}>
+        {children}
+      </code>
+    )
+    : (
+      <pre style={{
+        background: "#18181b", border: "1px solid #27272a",
+        borderRadius: 10, padding: "12px 16px",
+        overflowX: "auto", margin: "10px 0",
+      }}>
+        <code style={{ fontSize: 12, fontFamily: "monospace", color: "#a78bfa", lineHeight: 1.7 }}>
+          {children}
+        </code>
+      </pre>
+    ),
+  blockquote: ({ children }) => (
+    <blockquote style={{
+      borderLeft: "3px solid #7c3aed", margin: "10px 0",
+      paddingLeft: 14, color: "#71717a", fontStyle: "italic",
+    }}>
+      {children}
+    </blockquote>
+  ),
+  hr: () => (
+    <hr style={{ border: "none", borderTop: "1px solid #27272a", margin: "14px 0" }} />
+  ),
+  table: ({ children }) => (
+    <div style={{ overflowX: "auto", margin: "10px 0" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead style={{ background: "rgba(124,58,237,.1)" }}>{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th style={{ padding: "8px 12px", textAlign: "left", color: "#d4d4d8", fontWeight: 600, fontSize: 12, border: "1px solid #27272a" }}>
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td style={{ padding: "7px 12px", color: "#a1a1aa", border: "1px solid #27272a", lineHeight: 1.6 }}>
+      {children}
+    </td>
+  ),
+  tr: ({ children }) => (
+    <tr style={{ borderBottom: "1px solid #27272a" }}>{children}</tr>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: "#a78bfa", textDecoration: "underline", textUnderlineOffset: 3 }}
+      onMouseEnter={e => e.currentTarget.style.color = "#c4b5fd"}
+      onMouseLeave={e => e.currentTarget.style.color = "#a78bfa"}
+    >
+      {children}
+    </a>
+  ),
+};
 
+// ── Sub-components ────────────────────────────────────────────────────────────
 function StatusDot({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.parsing;
   return (
@@ -123,13 +245,9 @@ function DocItem({ doc, onDelete }) {
   const handleDelete = async () => {
     if (isDeleting) return;
     setIsDeleting(true);
-    try {
-      await onDelete(doc.id);
-    } catch (err) {
-      console.error("Delete failed:", err?.message || err);
-    } finally {
-      setIsDeleting(false);
-    }
+    try { await onDelete(doc.id); }
+    catch (err) { console.error("Delete failed:", err?.message || err); }
+    finally { setIsDeleting(false); }
   };
 
   return (
@@ -147,10 +265,7 @@ function DocItem({ doc, onDelete }) {
         {doc.type === "web" ? <Icon.Globe /> : <Icon.File />}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 12, color: "#d4d4d8",
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        }}>
+        <div style={{ fontSize: 12, color: "#d4d4d8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {truncate(doc.name, 28)}
         </div>
         <div style={{ marginTop: 3 }}>
@@ -185,11 +300,7 @@ function DropZone({ onFiles }) {
     <div
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
-      onDrop={e => {
-        e.preventDefault();
-        setDragging(false);
-        onFiles(Array.from(e.dataTransfer.files));
-      }}
+      onDrop={e => { e.preventDefault(); setDragging(false); onFiles(Array.from(e.dataTransfer.files)); }}
       onClick={() => inputRef.current?.click()}
       style={{
         border: `2px dashed ${dragging ? "#7c3aed" : "#3f3f46"}`,
@@ -199,8 +310,8 @@ function DropZone({ onFiles }) {
       }}
     >
       <input
-        ref={inputRef} type="file" multiple
-        accept=".pdf,.docx,.txt" style={{ display: "none" }}
+        ref={inputRef} type="file" multiple accept=".pdf,.docx,.txt"
+        style={{ display: "none" }}
         onChange={e => onFiles(Array.from(e.target.files))}
       />
       <div style={{ width: 24, height: 24, margin: "0 auto 8px", color: dragging ? "#a78bfa" : "#71717a" }}>
@@ -228,8 +339,7 @@ function SourcesAccordion({ sources }) {
           border: "1px solid rgba(63,63,70,.5)",
           background: "rgba(39,39,42,.6)",
           cursor: "pointer", color: "#71717a",
-          fontSize: 12, fontFamily: "inherit",
-          transition: "all .15s",
+          fontSize: 12, fontFamily: "inherit", transition: "all .15s",
         }}
         onMouseEnter={e => e.currentTarget.style.borderColor = "#52525b"}
         onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(63,63,70,.5)"}
@@ -289,8 +399,7 @@ function SkeletonLoader() {
     <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0" }}>
       {[75, 100, 88, 55].map((w, i) => (
         <div key={i} style={{
-          height: 12, borderRadius: 6,
-          background: "#27272a", width: `${w}%`,
+          height: 12, borderRadius: 6, background: "#27272a", width: `${w}%`,
           animation: "shimmer 1.4s ease-in-out infinite",
           animationDelay: `${i * 0.1}s`,
         }} />
@@ -307,10 +416,8 @@ function ChatMessage({ msg }) {
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
         <div style={{ maxWidth: "72%" }}>
           <div style={{
-            background: "#27272a",
-            border: "1px solid rgba(63,63,70,.5)",
-            borderRadius: "18px 18px 4px 18px",
-            padding: "10px 16px",
+            background: "#27272a", border: "1px solid rgba(63,63,70,.5)",
+            borderRadius: "18px 18px 4px 18px", padding: "10px 16px",
           }}>
             <p style={{ fontSize: 14, color: "#e4e4e7", lineHeight: 1.6, margin: 0 }}>
               {msg.content}
@@ -328,43 +435,44 @@ function ChatMessage({ msg }) {
     <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
       <div style={{
         width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-        background: "rgba(124,58,237,.2)",
-        border: "1px solid rgba(124,58,237,.3)",
-        display: "flex", alignItems: "center",
-        justifyContent: "center", marginTop: 2,
-        color: "#a78bfa", padding: 6,
+        background: "rgba(124,58,237,.2)", border: "1px solid rgba(124,58,237,.3)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        marginTop: 2, color: "#a78bfa", padding: 6,
       }}>
         <Icon.Brain />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Message header */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#d4d4d8" }}>
-            NexusRetrieval
-          </span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#d4d4d8" }}>NexusRetrieval</span>
           <span style={{ fontSize: 11, color: "#52525b" }}>{msg.ts}</span>
           {msg.isStreaming && (
-            <span style={{
-              fontSize: 11, color: "#a78bfa",
-              animation: "pulse 1s ease-in-out infinite",
-            }}>
+            <span style={{ fontSize: 11, color: "#a78bfa", animation: "pulse 1s ease-in-out infinite" }}>
               ● thinking
             </span>
           )}
         </div>
 
+        {/* ── Markdown content — this is the fixed section ── */}
         {msg.isStreaming && !msg.content
           ? <SkeletonLoader />
           : (
             <div style={{
-              fontSize: 13, color: "#a1a1aa", lineHeight: 1.8,
-              whiteSpace: "pre-wrap", wordBreak: "break-word",
+              fontSize: 13, lineHeight: 1.8,
+              // Reset any inherited styles that interfere with markdown
             }}>
-              {msg.content}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+              >
+                {msg.content}
+              </ReactMarkdown>
             </div>
           )
         }
 
+        {/* Sources accordion */}
         <SourcesAccordion sources={msg.sources} />
       </div>
     </div>
@@ -380,8 +488,7 @@ function WelcomeState({ onStarterClick }) {
     }}>
       <div style={{
         width: 64, height: 64, borderRadius: 20, padding: 16,
-        background: "rgba(124,58,237,.2)",
-        border: "1px solid rgba(124,58,237,.3)",
+        background: "rgba(124,58,237,.2)", border: "1px solid rgba(124,58,237,.3)",
         color: "#a78bfa", marginBottom: 20,
       }}>
         <Icon.Brain />
@@ -433,18 +540,17 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [urlError, setUrlError] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const messagesEndRef = useRef();
   const textareaRef = useRef();
-  const [isResetting, setIsResetting] = useState(false);
 
   const { messages, isStreaming, sendMessage, stopStreaming, clearMessages } = useChat();
   const {
     docs, connectionStatus, docCount,
-    handleFileUpload, handleScrapeUrl, removeDoc, resetKB,
+    handleFileUpload, handleScrapeUrl, removeDoc, resetKnowledgeBase,
   } = useKnowledgeBase();
 
-  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -468,7 +574,7 @@ export default function App() {
     setUrlError("");
     setUrlLoading(true);
     try {
-      new URL(url); // validate format
+      new URL(url);
       await handleScrapeUrl(url.trim());
       setUrl("");
     } catch (err) {
@@ -478,17 +584,13 @@ export default function App() {
     }
   };
 
-  const connColor = CONN_COLOR[connectionStatus] || "#f59e0b";
-
   const handleResetChat = async () => {
     if (isResetting) return;
-
+    if (!window.confirm("Clear all documents from the knowledge base?")) return;
     setIsResetting(true);
     try {
-      if (isStreaming) {
-        stopStreaming();
-      }
-      await resetKB();
+      if (isStreaming) stopStreaming();
+      await resetKnowledgeBase();
       clearMessages();
       setInput("");
       setUrl("");
@@ -500,25 +602,34 @@ export default function App() {
     }
   };
 
+  const connColor = CONN_COLOR[connectionStatus] || "#f59e0b";
+
   return (
     <>
-      {/* Global styles */}
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #09090b; font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+        body {
+          background: #09090b;
+          font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+          overflow: hidden;
+        }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        @keyframes shimmer { 0%,100%{opacity:.35} 50%{opacity:.65} }
-        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+        @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes shimmer{ 0%,100%{opacity:.35} 50%{opacity:.65} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         textarea { font-family: inherit; }
         textarea::placeholder { color: #52525b; }
+
+        /* Markdown body resets */
+        .md-body > *:first-child { margin-top: 0 !important; }
+        .md-body > *:last-child  { margin-bottom: 0 !important; }
+        .md-body ul, .md-body ol { list-style: revert; }
       `}</style>
 
       <div style={{ display: "flex", height: "100vh", background: "#09090b", color: "#f4f4f5", overflow: "hidden" }}>
 
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        {/* ── Sidebar ── */}
         <div style={{
           width: sidebarOpen ? 280 : 0, flexShrink: 0,
           display: "flex", flexDirection: "column",
@@ -532,8 +643,8 @@ export default function App() {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: 8, padding: 6,
-                  background: "rgba(124,58,237,.25)",
-                  border: "1px solid rgba(124,58,237,.4)", color: "#a78bfa",
+                  background: "rgba(124,58,237,.25)", border: "1px solid rgba(124,58,237,.4)",
+                  color: "#a78bfa",
                 }}>
                   <Icon.Brain />
                 </div>
@@ -541,11 +652,9 @@ export default function App() {
                   NexusRetrieval
                 </span>
               </div>
-              {/* Connection badge */}
               <div style={{
                 display: "flex", alignItems: "center", gap: 5,
-                background: "rgba(39,39,42,.6)",
-                border: "1px solid rgba(63,63,70,.4)",
+                background: "rgba(39,39,42,.6)", border: "1px solid rgba(63,63,70,.4)",
                 borderRadius: 999, padding: "3px 8px",
               }}>
                 <span style={{
@@ -561,14 +670,12 @@ export default function App() {
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-            {/* Upload section */}
+            {/* Upload */}
             <div style={{ padding: "14px 12px", borderBottom: "1px solid #1c1c1e" }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>
                 Knowledge Base
               </div>
               <DropZone onFiles={handleFileUpload} />
-
-              {/* URL scraper */}
               <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
                 <div style={{
                   flex: 1, display: "flex", alignItems: "center", gap: 8,
@@ -579,8 +686,7 @@ export default function App() {
                     <Icon.Link />
                   </span>
                   <input
-                    type="text"
-                    placeholder="Paste URL to scrape…"
+                    type="text" placeholder="Paste URL to scrape…"
                     value={url}
                     onChange={e => { setUrl(e.target.value); setUrlError(""); }}
                     onKeyDown={e => e.key === "Enter" && handleScrape()}
@@ -598,8 +704,7 @@ export default function App() {
                     background: urlLoading ? "#4c1d95" : "#7c3aed",
                     color: "#fff", fontSize: 12, fontWeight: 500,
                     cursor: urlLoading ? "not-allowed" : "pointer",
-                    whiteSpace: "nowrap", fontFamily: "inherit",
-                    transition: "background .2s",
+                    whiteSpace: "nowrap", fontFamily: "inherit", transition: "background .2s",
                   }}
                 >
                   {urlLoading ? "…" : "Scrape"}
@@ -612,37 +717,42 @@ export default function App() {
               )}
             </div>
 
-            {/* Document list */}
+            {/* Doc list */}
             <div style={{ padding: "10px 8px", flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px 8px" }}>
                 <span style={{ fontSize: 10, fontWeight: 600, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   Sources
                 </span>
-                <span style={{ fontSize: 11, color: "#52525b" }}>
-                  {docCount} vectors
-                </span>
+                <span style={{ fontSize: 11, color: "#52525b" }}>{docCount} vectors</span>
               </div>
-              {docs.length === 0 ? (
-                <p style={{ fontSize: 12, color: "#3f3f46", textAlign: "center", padding: "20px 8px" }}>
-                  No documents yet
-                </p>
-              ) : (
-                docs.map(doc => (
-                  <DocItem key={doc.id} doc={doc} onDelete={removeDoc} />
-                ))
-              )}
+              {docs.length === 0
+                ? <p style={{ fontSize: 12, color: "#3f3f46", textAlign: "center", padding: "20px 8px" }}>No documents yet</p>
+                : docs.map(doc => <DocItem key={doc.id} doc={doc} onDelete={removeDoc} />)
+              }
             </div>
           </div>
 
           {/* Footer */}
-          <div style={{ padding: "10px 16px", borderTop: "1px solid #1c1c1e" }}>
-            <span style={{ fontSize: 11, color: "#3f3f46" }}>
-              ⚡ LCEL · ChromaDB · LLaMA 3.1
-            </span>
+          <div style={{ padding: "10px 16px", borderTop: "1px solid #1c1c1e", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, color: "#3f3f46" }}>⚡ LCEL · ChromaDB · LLaMA 3.1</span>
+            <button
+              onClick={handleResetChat}
+              disabled={isResetting}
+              style={{
+                fontSize: 11, color: "#52525b", background: "transparent",
+                border: "none", cursor: isResetting ? "not-allowed" : "pointer",
+                fontFamily: "inherit", padding: "2px 6px", borderRadius: 4,
+                transition: "color .15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
+              onMouseLeave={e => e.currentTarget.style.color = "#52525b"}
+            >
+              {isResetting ? "Clearing…" : "Clear DB"}
+            </button>
           </div>
         </div>
 
-        {/* ── Main area ────────────────────────────────────────────────────── */}
+        {/* ── Main area ── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
           {/* Top bar */}
@@ -655,8 +765,7 @@ export default function App() {
               onClick={() => setSidebarOpen(p => !p)}
               style={{
                 width: 28, height: 28, padding: 6, borderRadius: 8,
-                border: "none", background: "transparent",
-                color: "#52525b", cursor: "pointer",
+                border: "none", background: "transparent", color: "#52525b", cursor: "pointer",
               }}
               onMouseEnter={e => e.currentTarget.style.color = "#d4d4d8"}
               onMouseLeave={e => e.currentTarget.style.color = "#52525b"}
@@ -667,24 +776,6 @@ export default function App() {
             <span style={{ fontSize: 13, color: "#71717a", fontWeight: 500 }}>
               Document Intelligence Chat
             </span>
-            <button
-              onClick={handleResetChat}
-              disabled={isResetting}
-              style={{
-                marginLeft: 12,
-                padding: "6px 10px",
-                borderRadius: 8,
-                border: "1px solid rgba(239,68,68,.35)",
-                background: "rgba(127,29,29,.2)",
-                color: "#fca5a5",
-                cursor: isResetting ? "not-allowed" : "pointer",
-                fontSize: 12,
-                fontFamily: "inherit",
-                opacity: isResetting ? 0.7 : 1,
-              }}
-            >
-              {isResetting ? "Resetting..." : "Reset Chat"}
-            </button>
             <div style={{ marginLeft: "auto", fontSize: 11, color: "#3f3f46" }}>
               {messages.length > 0 && `${messages.filter(m => m.role === "user").length} exchanges`}
             </div>
@@ -710,14 +801,13 @@ export default function App() {
           {/* Input bar */}
           <div style={{ flexShrink: 0, padding: "12px 24px 20px", borderTop: "1px solid #1c1c1e" }}>
             <div style={{ maxWidth: 680, margin: "0 auto" }}>
-              <div style={{
-                display: "flex", alignItems: "flex-end", gap: 10,
-                background: "rgba(18,18,20,.9)",
-                border: "1px solid #3f3f46",
-                borderRadius: 18, padding: "10px 12px 10px 16px",
-                boxShadow: "0 8px 32px rgba(0,0,0,.4)",
-                transition: "border-color .2s",
-              }}
+              <div
+                style={{
+                  display: "flex", alignItems: "flex-end", gap: 10,
+                  background: "rgba(18,18,20,.9)", border: "1px solid #3f3f46",
+                  borderRadius: 18, padding: "10px 12px 10px 16px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,.4)", transition: "border-color .2s",
+                }}
                 onFocusCapture={e => e.currentTarget.style.borderColor = "#52525b"}
                 onBlurCapture={e => e.currentTarget.style.borderColor = "#3f3f46"}
               >
@@ -732,8 +822,7 @@ export default function App() {
                   style={{
                     flex: 1, background: "transparent", border: "none",
                     outline: "none", fontSize: 14, color: "#e4e4e7",
-                    lineHeight: 1.6, resize: "none", maxHeight: 120,
-                    overflowY: "auto",
+                    lineHeight: 1.6, resize: "none", maxHeight: 120, overflowY: "auto",
                   }}
                 />
                 <button
@@ -741,23 +830,17 @@ export default function App() {
                   style={{
                     width: 34, height: 34, borderRadius: 10, border: "none",
                     flexShrink: 0, cursor: "pointer", padding: 8,
-                    background: isStreaming ? "#7f1d1d"
-                      : input.trim() ? "#7c3aed" : "#27272a",
-                    color: isStreaming ? "#fca5a5"
-                      : input.trim() ? "#fff" : "#52525b",
+                    background: isStreaming ? "#7f1d1d" : input.trim() ? "#7c3aed" : "#27272a",
+                    color: isStreaming ? "#fca5a5" : input.trim() ? "#fff" : "#52525b",
                     transition: "all .2s",
-                    boxShadow: input.trim() && !isStreaming
-                      ? "0 4px 14px rgba(124,58,237,.4)" : "none",
+                    boxShadow: input.trim() && !isStreaming ? "0 4px 14px rgba(124,58,237,.4)" : "none",
                   }}
                 >
                   {isStreaming ? <Icon.Stop /> : <Icon.Send />}
                 </button>
               </div>
 
-              <div style={{
-                display: "flex", justifyContent: "space-between",
-                padding: "6px 4px 0", fontSize: 11, color: "#3f3f46",
-              }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 4px 0", fontSize: 11, color: "#3f3f46" }}>
                 <span>
                   {docs.filter(d => d.status === "ready").length} sources ready
                   {docs.some(d => d.status === "parsing" || d.status === "embedding") && (

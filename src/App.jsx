@@ -735,20 +735,7 @@ export default function App() {
           {/* Footer */}
           <div style={{ padding: "10px 16px", borderTop: "1px solid #1c1c1e", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontSize: 11, color: "#3f3f46" }}>⚡ LCEL · ChromaDB · LLaMA 3.1</span>
-            <button
-              onClick={handleResetChat}
-              disabled={isResetting}
-              style={{
-                fontSize: 11, color: "#52525b", background: "transparent",
-                border: "none", cursor: isResetting ? "not-allowed" : "pointer",
-                fontFamily: "inherit", padding: "2px 6px", borderRadius: 4,
-                transition: "color .15s",
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
-              onMouseLeave={e => e.currentTarget.style.color = "#52525b"}
-            >
-              {isResetting ? "Clearing…" : "Clear DB"}
-            </button>
+            
           </div>
         </div>
 
@@ -776,6 +763,20 @@ export default function App() {
             <span style={{ fontSize: 13, color: "#71717a", fontWeight: 500 }}>
               Document Intelligence Chat
             </span>
+            <button
+              onClick={handleResetChat}
+              disabled={isResetting}
+              style={{
+                fontSize: 11, color: "#52525b", background: "transparent",
+                border: "none", cursor: isResetting ? "not-allowed" : "pointer",
+                fontFamily: "inherit", padding: "2px 6px", borderRadius: 4,
+                transition: "color .15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
+              onMouseLeave={e => e.currentTarget.style.color = "#52525b"}
+            >
+              {isResetting ? "Clearing…" : "Clear DB"}
+            </button>
             <div style={{ marginLeft: "auto", fontSize: 11, color: "#3f3f46" }}>
               {messages.length > 0 && `${messages.filter(m => m.role === "user").length} exchanges`}
             </div>

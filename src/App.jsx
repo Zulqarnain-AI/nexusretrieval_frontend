@@ -767,15 +767,19 @@ export default function App() {
               onClick={handleResetChat}
               disabled={isResetting}
               style={{
-                fontSize: 11, color: "#52525b", background: "transparent",
-                border: "none", cursor: isResetting ? "not-allowed" : "pointer",
-                fontFamily: "inherit", padding: "2px 6px", borderRadius: 4,
-                transition: "color .15s",
+                marginLeft: 12,
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: "1px solid rgba(249, 244, 244, 0.35)",
+                background: "rgba(241, 106, 106, 0.2)",
+                color: "#d5c7c7",
+                cursor: isResetting ? "not-allowed" : "pointer",
+                fontSize: 12,
+                fontFamily: "inherit",
+                opacity: isResetting ? 0.7 : 1,
               }}
-              onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
-              onMouseLeave={e => e.currentTarget.style.color = "#52525b"}
             >
-              {isResetting ? "Clearing…" : "Clear DB"}
+              {isResetting ? "Resetting..." : "Reset Chat"}
             </button>
             <div style={{ marginLeft: "auto", fontSize: 11, color: "#3f3f46" }}>
               {messages.length > 0 && `${messages.filter(m => m.role === "user").length} exchanges`}

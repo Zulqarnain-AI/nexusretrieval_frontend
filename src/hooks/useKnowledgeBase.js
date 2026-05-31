@@ -122,6 +122,9 @@ export function useKnowledgeBase() {
     handleFileUpload,
     handleScrapeUrl,
     removeDoc,
+    // keep the existing name and also provide the expected
+    // `resetKnowledgeBase` key that the app imports
     resetKB,
+    resetKnowledgeBase: resetKB,
   };
 }
